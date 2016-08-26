@@ -1,4 +1,4 @@
-#!/bin/bash -       
+#!/bin/bash       
 
 #==============================================================================
 #title          :aws_raid_builder.sh
@@ -10,6 +10,8 @@
 #notes          :curl,mdadm, and filesystem tools
 #bash_version   :4.2.46
 #==============================================================================
+
+set -e
 
 #VARIABLES
 META_HOST="http://169.254.169.254/latest/meta-data/"
@@ -26,11 +28,11 @@ MOUNT_POINT="/opt/wildfly/standalone/data"
 #FUNCTIONS
 build_raid(){
 
-		for blk_dev in "${raid_blk_dev[@]}"; do
-			umount -f ${blk_dev}
-		done
+        for blk_dev in "${raid_blk_dev[@]}"; do
+                umount -f ${blk_dev}
+        done
 
-        mdadm -f -C --level=${RAID_TYPE} --raid-devices=${#raid_blk_dev[@]} ${DEFAULT_RAID_DEV} ${raid_blk_dev[@]}
+        yes | mdadm --create --level=${RAID_TYPE} --raid-devices=${#raid_blk_dev[@]} ${DEFAULT_RAID_DEV} --force ${raid_blk_dev[@]}
 
         mkfs.${RAID_FS} -F ${DEFAULT_RAID_DEV}
 
@@ -38,7 +40,7 @@ build_raid(){
 }
 
 add_fstab_note(){
-        echo "LABEL=\"${RAID_LABEL}\" ${MOUNT_POINT} ${RAID_FS} ${MOUNT_OPTS} 0 1"
+        echo "LABEL=\"${RAID_LABEL}\" ${MOUNT_POINT} ${RAID_FS} ${MOUNT_OPTS} 0 1" >> "/etc/fstab"
 }
 
 #MAIN_CODE
@@ -49,7 +51,7 @@ declare -a all_blk_dev=( $(curl -s ${META_HOST}/${MAPPED_DEVICES}) )
 declare -a local_blk_dev=( ${all_blk_dev[@]/!([eph]*)/ })
 
 for blk_dev in "${local_blk_dev[@]}"; do
-	declare -a raid_blk_dev=(${raid_blk_dev[@]}"/dev/$(curl -s ${META_HOST}/${MAPPED_DEVICES}/${blk_dev}) ")
+        declare -a raid_blk_dev=(${raid_blk_dev[@]}"/dev/$(curl -s ${META_HOST}/${MAPPED_DEVICES}/${blk_dev}) ")
 done
 shopt -u extglob
 
@@ -58,3 +60,4 @@ if [[ -n "${raid_blk_dev[@]}" ]]; then
 else
         echo "local disks not found"
 fi
+
