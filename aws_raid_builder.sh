@@ -44,11 +44,12 @@ add_fstab_note(){
 #MAIN_CODE
 shopt -s extglob
 declare -a all_blk_dev=( $(curl -s ${META_HOST}/${MAPPED_DEVICES}) )
-# Removes all devices except ephemeral
+
+## Removes all devices except ephemeral
 declare -a local_blk_dev=( ${all_blk_dev[@]/!([eph]*)/ })
 
 for blk_dev in "${local_blk_dev[@]}"; do
-declare -a raid_blk_dev=(${raid_blk_dev[@]}"/dev/$(curl -s ${META_HOST}/${MAPPED_DEVICES}/${blk_dev}) ")
+	declare -a raid_blk_dev=(${raid_blk_dev[@]}"/dev/$(curl -s ${META_HOST}/${MAPPED_DEVICES}/${blk_dev}) ")
 done
 shopt -u extglob
 
