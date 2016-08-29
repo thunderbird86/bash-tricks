@@ -11,6 +11,6 @@
 * For CentOS
 
 ```ShellSession
-$  chkconfig --add aws_raid_builder
+$ 
 
 ```
